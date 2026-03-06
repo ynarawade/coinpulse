@@ -10,11 +10,11 @@ class AppTheme {
   static TextTheme _buildTextTheme(Color primary, Color secondary) {
     // Syne — used for all display, headline, and title styles
     // Sharp, geometric, great for prices and headings on dark backgrounds
-    final syne = GoogleFonts.syneTextTheme();
+    // final syne = GoogleFonts.syneTextTheme();
 
     // DM Sans — used for body, label styles
     // Clean and highly readable at small sizes for coin data
-    final dmSans = GoogleFonts.dmSansTextTheme();
+    // final dmSans = GoogleFonts.dmSansTextTheme();
 
     return TextTheme(
       // ── Display — large prices, hero numbers ──────────────────────────

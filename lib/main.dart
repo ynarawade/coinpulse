@@ -1,5 +1,5 @@
 import 'package:coin_pulse/controller/theme_controller.dart';
-import 'package:coin_pulse/screens/home_screen.dart';
+import 'package:coin_pulse/screens/splash_screen.dart';
 import 'package:coin_pulse/utils/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
           themeMode: themeController.themeMode,
           theme: AppTheme.lightThemeData,
           darkTheme: AppTheme.darkThemeData,
-          home: const HomeScreen(),
+          home: const SplashScreen(),
         );
       },
     );
