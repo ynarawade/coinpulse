@@ -109,6 +109,7 @@ class HomeScreen extends StatelessWidget {
       'price': r'$67,432.10',
       'marketCap': r'$1.33T',
       'change': 2.41,
+      'sparkline': [100, 105, 98, 112, 108, 115, 120, 118, 125],
     },
     {
       'rank': 2,
@@ -119,6 +120,7 @@ class HomeScreen extends StatelessWidget {
       'price': r'$3,512.88',
       'marketCap': r'$422.6B',
       'change': -1.12,
+      'sparkline': [100, 105, 98, 10, 58, 115, 120, 118, 125],
     },
     // add more...
   ];

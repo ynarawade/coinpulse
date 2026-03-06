@@ -1,5 +1,4 @@
 import 'package:coin_pulse/screens/widgets/market/market_coin_tile.dart';
-import 'package:coin_pulse/utils/theme/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -74,64 +73,13 @@ class _MarketSectionState extends State<MarketSection> {
                   onPressed: () {
                     // TODO: navigate to full trending screen
                   },
-                  icon: const Icon(Iconsax.arrow_right_3),
+                  icon: const Icon(Iconsax.filter_add),
                   color: theme.colorScheme.secondary,
                   iconSize: 20,
                 ),
               ],
             ),
           ),
-
-          // ── Filter chips ───────────────────────────────────────────────────
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: marketCategories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final category = marketCategories[index];
-                final isSelected = _selectedIndex == index;
-
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedIndex = index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : theme.dividerColor,
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      category.label,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: isSelected
-                            ? Colors.white
-                            : theme.colorScheme.onSurfaceVariant,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 8),
 
           // ── Column header ──────────────────────────────────────────────────
           Padding(
@@ -177,6 +125,10 @@ class _MarketSectionState extends State<MarketSection> {
                 price: coin['price'] as String,
                 marketCap: coin['marketCap'] as String,
                 changePercent: (coin['change'] as num).toDouble(),
+                sparklineData: List<double>.from(
+                  (coin['sparkline'] as List).map((e) => (e as num).toDouble()),
+                ),
+
                 onTap: () {
                   // TODO: navigate to coin detail screen
                 },
