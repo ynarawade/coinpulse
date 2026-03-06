@@ -70,9 +70,9 @@ class GainerCoinCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(50),
       child: Image.network(
         imageUrl,
-        width: 34,
-        height: 34,
-        errorBuilder: (_, __, ___) => _buildImageFallback(theme),
+        width: 30,
+        height: 30,
+        errorBuilder: (_, _, _) => _buildImageFallback(theme),
       ),
     );
   }

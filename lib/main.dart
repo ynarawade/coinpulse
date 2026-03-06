@@ -1,3 +1,4 @@
+import 'package:coin_pulse/controller/market_controller.dart';
 import 'package:coin_pulse/controller/theme_controller.dart';
 import 'package:coin_pulse/screens/splash_screen.dart';
 import 'package:coin_pulse/utils/theme/app_theme.dart';
@@ -9,6 +10,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeController()),
+        ChangeNotifierProvider(create: (_) => MarketController()),
       ],
       child: const MyApp(),
     ),

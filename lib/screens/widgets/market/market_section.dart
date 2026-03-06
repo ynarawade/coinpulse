@@ -1,3 +1,4 @@
+import 'package:coin_pulse/models/coin_model.dart';
 import 'package:coin_pulse/screens/widgets/market/market_coin_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
@@ -10,32 +11,16 @@ class MarketCategory {
   const MarketCategory({required this.label});
 }
 
-// ── All available categories ─────────────────────────────────────────────────
-
-const List<MarketCategory> marketCategories = [
-  MarketCategory(label: 'All'),
-  MarketCategory(label: 'Crypto'),
-  MarketCategory(label: 'NFT'),
-  MarketCategory(label: 'DeFi'),
-  MarketCategory(label: 'Layer 1'),
-  MarketCategory(label: 'Layer 2'),
-  MarketCategory(label: 'Meme'),
-];
-
 // ── Market Section widget ─────────────────────────────────────────────────────
 
-class MarketSection extends StatefulWidget {
-  final List<Map<String, dynamic>> coinsList;
+class MarketSection extends StatelessWidget {
+  final List<CoinModel> coinsList;
   final VoidCallback? onSeeAll;
 
   const MarketSection({super.key, required this.coinsList, this.onSeeAll});
 
-  @override
-  State<MarketSection> createState() => _MarketSectionState();
-}
-
-class _MarketSectionState extends State<MarketSection> {
-  int _selectedIndex = 0;
+  // Show only first 5 items
+  List<CoinModel> get _items => coinsList.take(10).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -86,10 +71,7 @@ class _MarketSectionState extends State<MarketSection> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Row(
               children: [
-                SizedBox(
-                  width: 28,
-                  child: Text('#', style: theme.textTheme.labelSmall),
-                ),
+                SizedBox(width: 28),
                 Text('Coin', style: theme.textTheme.labelSmall),
                 const Spacer(),
                 Text('Price / 24h', style: theme.textTheme.labelSmall),
@@ -108,25 +90,23 @@ class _MarketSectionState extends State<MarketSection> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: widget.coinsList.length,
-            separatorBuilder: (_, __) => Divider(
+            itemCount: _items.length,
+            separatorBuilder: (_, _) => Divider(
               height: 1,
               indent: 16,
               endIndent: 16,
               color: theme.dividerColor,
             ),
             itemBuilder: (context, index) {
-              final coin = widget.coinsList[index];
+              final coin = _items[index];
               return MarketCoinTile(
-                rank: coin['rank'] as int,
-                name: coin['name'] as String,
-                symbol: coin['symbol'] as String,
-                imageUrl: coin['image'] as String,
-                price: coin['price'] as String,
-                marketCap: coin['marketCap'] as String,
-                changePercent: (coin['change'] as num).toDouble(),
+                name: coin.name,
+                symbol: coin.symbol,
+                imageUrl: coin.imageUrl,
+                price: coin.formattedPrice,
+                changePercent: coin.priceChangePercent24h,
                 sparklineData: List<double>.from(
-                  (coin['sparkline'] as List).map((e) => (e as num).toDouble()),
+                  (coin.sparkline).map((e) => (e as num).toDouble()),
                 ),
 
                 onTap: () {

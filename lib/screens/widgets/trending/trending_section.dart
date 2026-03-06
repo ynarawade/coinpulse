@@ -1,14 +1,15 @@
+import 'package:coin_pulse/models/trending_coin_model.dart';
 import 'package:coin_pulse/screens/widgets/trending/trending_coin_card.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
 class TrendingSection extends StatelessWidget {
-  final List<Map<String, dynamic>> trendingList;
+  final List<TrendingCoinModel> trendingList;
 
   const TrendingSection({super.key, required this.trendingList});
 
   // Show only first 5 items
-  List<Map<String, dynamic>> get _items => trendingList.take(5).toList();
+  List<TrendingCoinModel> get _items => trendingList.take(5).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +60,7 @@ class TrendingSection extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _items.length,
-            separatorBuilder: (_, __) => Divider(
+            separatorBuilder: (_, _) => Divider(
               height: 1,
               indent: 16,
               endIndent: 16,
@@ -68,11 +69,11 @@ class TrendingSection extends StatelessWidget {
             itemBuilder: (context, index) {
               final coin = _items[index];
               return TrendingCoinCard(
-                name: coin['name'] as String,
-                symbol: coin['symbol'] as String,
-                imageUrl: coin['image'] as String,
-                price: coin['price'] as String,
-                changePercent: (coin['change'] as num).toDouble(),
+                name: coin.name,
+                symbol: coin.symbol,
+                imageUrl: coin.thumbImageUrl,
+                price: coin.formattedPrice,
+                changePercent: coin.priceChangePercent24h,
               );
             },
           ),

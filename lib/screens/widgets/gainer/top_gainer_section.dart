@@ -1,9 +1,10 @@
+import 'package:coin_pulse/models/coin_model.dart';
 import 'package:coin_pulse/screens/widgets/gainer/gainer_coin_card.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 
 class TopGainersSection extends StatelessWidget {
-  final List<Map<String, dynamic>> gainersList;
+  final List<CoinModel> gainersList;
 
   const TopGainersSection({super.key, required this.gainersList});
 
@@ -68,12 +69,12 @@ class TopGainersSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 final coin = gainersList[index];
                 return GainerCoinCard(
-                  name: coin['name'] as String,
-                  symbol: coin['symbol'] as String,
-                  imageUrl: coin['image'] as String,
-                  price: coin['price'] as String,
-                  changePercent: (coin['change'] as num).toDouble(),
-                  rank: coin['rank'] as int,
+                  name: coin.name,
+                  symbol: coin.symbol,
+                  imageUrl: coin.imageUrl,
+                  price: coin.currentPrice.toString(),
+                  changePercent: coin.priceChangePercent24h,
+                  rank: index + 1,
                 );
               },
             ),

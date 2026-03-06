@@ -1,3 +1,4 @@
+import 'package:coin_pulse/controller/market_controller.dart';
 import 'package:coin_pulse/controller/theme_controller.dart';
 import 'package:coin_pulse/screens/widgets/gainer/top_gainer_section.dart';
 import 'package:coin_pulse/screens/widgets/market/market_section.dart';
@@ -7,128 +8,29 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  // ── Dummy data — replace with your TrendingController later ─────────────
-  static const List<Map<String, dynamic>> _dummyTrending = [
-    {
-      'name': 'Bitcoin',
-      'symbol': 'btc',
-      'image': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
-      'price': r'$67,432.10',
-      'change': 2.41,
-    },
-    {
-      'name': 'Ethereum',
-      'symbol': 'eth',
-      'image':
-          'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
-      'price': r'$3,512.88',
-      'change': 1.87,
-    },
-    {
-      'name': 'Solana',
-      'symbol': 'sol',
-      'image':
-          'https://assets.coingecko.com/coins/images/4128/large/solana.png',
-      'price': r'$142.55',
-      'change': -3.14,
-    },
-    {
-      'name': 'BNB',
-      'symbol': 'bnb',
-      'image':
-          'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
-      'price': r'$598.20',
-      'change': -0.92,
-    },
-    {
-      'name': 'XRP',
-      'symbol': 'xrp',
-      'image':
-          'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
-      'price': r'$0.5842',
-      'change': 5.23,
-    },
-  ];
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
-  // dummy data — swap with controller later
-  static const List<Map<String, dynamic>> _dummyGainers = [
-    {
-      'rank': 1,
-      'name': 'Pepe',
-      'symbol': 'pepe',
-      'image':
-          'https://assets.coingecko.com/coins/images/29850/large/pepe-token.jpeg',
-      'price': r'$0.00001423',
-      'change': 38.52,
-    },
-    {
-      'rank': 2,
-      'name': 'Render',
-      'symbol': 'rndr',
-      'image': 'https://assets.coingecko.com/coins/images/11636/large/rndr.png',
-      'price': r'$8.21',
-      'change': 22.14,
-    },
-    {
-      'rank': 3,
-      'name': 'Bonk',
-      'symbol': 'bonk',
-      'image': 'https://assets.coingecko.com/coins/images/28600/large/bonk.jpg',
-      'price': r'$0.00003214',
-      'change': 18.73,
-    },
-    {
-      'rank': 4,
-      'name': 'Arbitrum',
-      'symbol': 'arb',
-      'image':
-          'https://assets.coingecko.com/coins/images/16547/large/arbitrum.png',
-      'price': r'$1.24',
-      'change': 15.62,
-    },
-    {
-      'rank': 5,
-      'name': 'Optimism',
-      'symbol': 'op',
-      'image':
-          'https://assets.coingecko.com/coins/images/25244/large/Optimism.png',
-      'price': r'$3.08',
-      'change': 13.47,
-    },
-  ];
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    // fetch all data when screen mounts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MarketController>().init();
+    });
 
-  static const List<Map<String, dynamic>> _dummyMarket = [
-    {
-      'rank': 1,
-      'name': 'Bitcoin',
-      'symbol': 'btc',
-      'image': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
-      'price': r'$67,432.10',
-      'marketCap': r'$1.33T',
-      'change': 2.41,
-      'sparkline': [100, 105, 98, 112, 108, 115, 120, 118, 125],
-    },
-    {
-      'rank': 2,
-      'name': 'Ethereum',
-      'symbol': 'eth',
-      'image':
-          'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
-      'price': r'$3,512.88',
-      'marketCap': r'$422.6B',
-      'change': -1.12,
-      'sparkline': [100, 105, 98, 10, 58, 115, 120, 118, 125],
-    },
-    // add more...
-  ];
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final themeProvider = context.watch<ThemeController>();
+    final market = context.watch<MarketController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -182,15 +84,16 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 16,
             children: [
-              TrendingSection(trendingList: _dummyTrending),
+              TrendingSection(trendingList: market.trending),
 
-              TopGainersSection(gainersList: _dummyGainers),
+              TopGainersSection(gainersList: market.gainers),
               MarketSection(
-                coinsList: _dummyMarket,
+                coinsList: market.allCoins,
                 onSeeAll: () {
                   // TODO: navigate to full market screen
                 },
               ),
+              const SizedBox(height: 30),
             ],
           ),
         ),

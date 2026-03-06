@@ -8,9 +8,9 @@ class MarketCoinTile extends StatelessWidget {
   final String symbol;
   final String imageUrl;
   final String price;
-  final String marketCap;
+
   final double changePercent;
-  final int rank;
+
   final List<double> sparklineData; // 7-day price points
   final VoidCallback? onTap;
 
@@ -20,9 +20,8 @@ class MarketCoinTile extends StatelessWidget {
     required this.symbol,
     required this.imageUrl,
     required this.price,
-    required this.marketCap,
+
     required this.changePercent,
-    required this.rank,
     required this.sparklineData,
     this.onTap,
   });
@@ -44,11 +43,11 @@ class MarketCoinTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(50),
               child: Image.network(
                 imageUrl,
-                width: 38,
-                height: 38,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 38,
-                  height: 38,
+                width: 30,
+                height: 30,
+                errorBuilder: (_, _, _) => Container(
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerHighest,
                     shape: BoxShape.circle,
