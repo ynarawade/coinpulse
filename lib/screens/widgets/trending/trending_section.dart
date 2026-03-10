@@ -1,7 +1,6 @@
 import 'package:coin_pulse/models/trending_coin_model.dart';
 import 'package:coin_pulse/screens/widgets/trending/trending_coin_card.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
 
 class TrendingSection extends StatelessWidget {
   final List<TrendingCoinModel> trendingList;
@@ -31,26 +30,26 @@ class TrendingSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Trending', style: theme.textTheme.headlineMedium),
-                IconButton(
-                  // style: ButtonStyle(
-                  //   shape: WidgetStateProperty.all(
-                  //     RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.circular(16),
-                  //     ),
-                  //   ),
-                  //   backgroundColor: WidgetStateColor.resolveWith((_) {
-                  //     return isDark
-                  //         ? AppColors.darkSurfaceVariant
-                  //         : AppColors.lightSurfaceVariant;
-                  //   }),
-                  // ),
-                  onPressed: () {
-                    // TODO: navigate to full trending screen
-                  },
-                  icon: const Icon(Iconsax.arrow_right_3),
-                  color: theme.colorScheme.secondary,
-                  iconSize: 20,
-                ),
+                // IconButton(
+                // style: ButtonStyle(
+                //   shape: WidgetStateProperty.all(
+                //     RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(16),
+                //     ),
+                //   ),
+                //   backgroundColor: WidgetStateColor.resolveWith((_) {
+                //     return isDark
+                //         ? AppColors.darkSurfaceVariant
+                //         : AppColors.lightSurfaceVariant;
+                //   }),
+                // ),
+                //   onPressed: () {
+                //     // TODO: navigate to full trending screen
+                //   },
+                //   icon: const Icon(Iconsax.arrow_right_3),
+                //   color: theme.colorScheme.secondary,
+                //   iconSize: 20,
+                // ),
               ],
             ),
           ),
@@ -68,12 +67,22 @@ class TrendingSection extends StatelessWidget {
             ),
             itemBuilder: (context, index) {
               final coin = _items[index];
-              return TrendingCoinCard(
-                name: coin.name,
-                symbol: coin.symbol,
-                imageUrl: coin.thumbImageUrl,
-                price: coin.formattedPrice,
-                changePercent: coin.priceChangePercent24h,
+              return InkWell(
+                onTap: () {
+                  // Navigator.push(
+                  // context,
+                  // MaterialPageRoute<void>(
+                  // builder: (context) => const CoinDetails(),
+                  // ),
+                  // );
+                },
+                child: TrendingCoinCard(
+                  name: coin.name,
+                  symbol: coin.symbol,
+                  imageUrl: coin.thumbImageUrl,
+                  price: coin.formattedPrice,
+                  changePercent: coin.priceChangePercent24h,
+                ),
               );
             },
           ),

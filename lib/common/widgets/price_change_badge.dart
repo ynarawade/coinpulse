@@ -71,12 +71,6 @@ class PriceChangeBadge extends StatelessWidget {
     PriceChangeBadgeSize.large => 5,
   };
 
-  TextStyle? _priceStyle(ThemeData theme) => switch (size) {
-    PriceChangeBadgeSize.small => theme.textTheme.labelMedium,
-    PriceChangeBadgeSize.medium => theme.textTheme.titleMedium,
-    PriceChangeBadgeSize.large => theme.textTheme.titleLarge,
-  };
-
   TextStyle? _badgeTextStyle(ThemeData theme) => switch (size) {
     PriceChangeBadgeSize.small => theme.textTheme.labelSmall,
     PriceChangeBadgeSize.medium => theme.textTheme.labelSmall,

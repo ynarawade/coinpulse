@@ -1,7 +1,7 @@
 import 'package:coin_pulse/models/coin_model.dart';
+import 'package:coin_pulse/screens/coin_details.dart';
 import 'package:coin_pulse/screens/widgets/gainer/gainer_coin_card.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
 
 class TopGainersSection extends StatelessWidget {
   final List<CoinModel> gainersList;
@@ -28,26 +28,26 @@ class TopGainersSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Top Gainers', style: theme.textTheme.headlineSmall),
-                IconButton(
-                  // style: ButtonStyle(
-                  //   shape: WidgetStateProperty.all(
-                  //     RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.circular(16),
-                  //     ),
-                  //   ),
-                  //   backgroundColor: WidgetStateColor.resolveWith((_) {
-                  //     return isDark
-                  //         ? AppColors.darkSurfaceVariant
-                  //         : AppColors.lightSurfaceVariant;
-                  //   }),
-                  // ),
-                  onPressed: () {
-                    // TODO: navigate to full trending screen
-                  },
-                  icon: const Icon(Iconsax.arrow_right_3),
-                  color: theme.colorScheme.secondary,
-                  iconSize: 20,
-                ),
+                // IconButton(
+                // style: ButtonStyle(
+                //   shape: WidgetStateProperty.all(
+                //     RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(16),
+                //     ),
+                //   ),
+                //   backgroundColor: WidgetStateColor.resolveWith((_) {
+                //     return isDark
+                //         ? AppColors.darkSurfaceVariant
+                //         : AppColors.lightSurfaceVariant;
+                //   }),
+                // ),
+                //   onPressed: () {
+                //     // TODO: navigate to full trending screen
+                //   },
+                //   icon: const Icon(Iconsax.arrow_right_3),
+                //   color: theme.colorScheme.secondary,
+                //   iconSize: 20,
+                // ),
               ],
             ),
           ),
@@ -68,13 +68,23 @@ class TopGainersSection extends StatelessWidget {
               ),
               itemBuilder: (context, index) {
                 final coin = gainersList[index];
-                return GainerCoinCard(
-                  name: coin.name,
-                  symbol: coin.symbol,
-                  imageUrl: coin.imageUrl,
-                  price: coin.currentPrice.toString(),
-                  changePercent: coin.priceChangePercent24h,
-                  rank: index + 1,
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (ctx) => CoinDetailScreen(coin: coin),
+                      ),
+                    );
+                  },
+                  child: GainerCoinCard(
+                    name: coin.name,
+                    symbol: coin.symbol,
+                    imageUrl: coin.imageUrl,
+                    price: coin.formattedPrice,
+                    changePercent: coin.priceChangePercent24h,
+                    rank: index + 1,
+                  ),
                 );
               },
             ),

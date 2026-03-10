@@ -200,6 +200,24 @@ class ApiService {
     return data as Map<String, dynamic>;
   }
 
+  // ───  OHLC chart ───────────────────────────────────────────────────────
+  /// Returns list of [timestamp, open, high, low, close] arrays.
+  ///
+  /// [days]: 1 | 7 | 14 | 30 | 90 | 365 | 'max'
+  /// Candle interval is auto-selected by CoinGecko based on days:
+  ///   1-2 days → 30 min | 3-30 days → 4 hours | 31+ days → 4 days
+  static Future<List<dynamic>> getCoinOhlc(
+    String coinId, {
+    String currency = 'usd',
+    String days = '30',
+  }) async {
+    final data = await get(
+      '/coins/$coinId/ohlc',
+      queryParams: {'vs_currency': currency, 'days': days},
+    );
+    return data as List<dynamic>;
+  }
+
   // =========================================================================
   // RESPONSE HANDLER
   // =========================================================================

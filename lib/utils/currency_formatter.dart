@@ -36,6 +36,16 @@ class CurrencyFormatter {
     return '\$${value.toStringAsFixed(0)}';
   }
 
+  /// Formats a price delta (absolute change) fixed to 2 or 4 decimal places.
+  ///
+  /// >= 1    → +97.28  (2 decimals)
+  /// < 1     → +0.0042 (4 decimals)
+  static String formatDelta(double value) {
+    final sign = value >= 0 ? '+' : '';
+    if (value.abs() >= 1) return '$sign${value.toStringAsFixed(2)}';
+    return '$sign${value.toStringAsFixed(4)}';
+  }
+
   /// Formats a percentage change with a + or - sign.
   ///
   /// 2.41  → '+2.41%'

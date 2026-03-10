@@ -1,4 +1,5 @@
 import 'package:coin_pulse/models/coin_model.dart';
+import 'package:coin_pulse/screens/coin_details.dart';
 import 'package:coin_pulse/screens/widgets/market/market_coin_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
@@ -100,6 +101,14 @@ class MarketSection extends StatelessWidget {
             itemBuilder: (context, index) {
               final coin = _items[index];
               return MarketCoinTile(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (ctx) => CoinDetailScreen(coin: coin),
+                    ),
+                  );
+                },
                 name: coin.name,
                 symbol: coin.symbol,
                 imageUrl: coin.imageUrl,
@@ -108,10 +117,6 @@ class MarketSection extends StatelessWidget {
                 sparklineData: List<double>.from(
                   (coin.sparkline).map((e) => (e as num).toDouble()),
                 ),
-
-                onTap: () {
-                  // TODO: navigate to coin detail screen
-                },
               );
             },
           ),
