@@ -84,11 +84,18 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 16,
             children: [
-              TrendingSection(trendingList: market.trending),
+              TrendingSection(
+                trendingList: market.trending,
+                isLoading: market.isLoading,
+              ),
 
-              TopGainersSection(gainersList: market.gainers),
+              TopGainersSection(
+                gainersList: market.gainers,
+                isLoading: market.isLoading,
+              ),
               MarketSection(
                 coinsList: market.allCoins,
+                isLoading: market.isLoading,
                 onSeeAll: () {
                   // TODO: navigate to full market screen
                 },

@@ -3,7 +3,6 @@ import 'package:coin_pulse/models/coin_model.dart';
 import 'package:coin_pulse/screens/widgets/coin_details/analysis_tab.dart';
 import 'package:coin_pulse/screens/widgets/coin_details/coin_chart.dart';
 import 'package:coin_pulse/screens/widgets/coin_details/high_low_item.dart';
-import 'package:coin_pulse/screens/widgets/coin_details/info_tab.dart';
 import 'package:coin_pulse/screens/widgets/coin_details/summary_tab.dart';
 import 'package:coin_pulse/utils/currency_formatter.dart';
 import 'package:coin_pulse/utils/theme/colors.dart';
@@ -17,7 +16,6 @@ class CoinDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // inject controller — scoped to this screen only
     return ChangeNotifierProvider(
       create: (_) => CoinDetailController(coin: coin)..init(),
       child: const _CoinDetailView(),
@@ -39,7 +37,8 @@ class _CoinDetailViewState extends State<_CoinDetailView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
+    // print("API KEY: ${dotenv.env['coingecko_api_key']}");
   }
 
   @override
@@ -69,7 +68,6 @@ class _CoinDetailViewState extends State<_CoinDetailView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 16,
                   children: [
-                    // back | symbol/USDT | watchlist
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -112,7 +110,6 @@ class _CoinDetailViewState extends State<_CoinDetailView>
 
                     const SizedBox(height: 20),
 
-                    // price + high/low
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -178,74 +175,63 @@ class _CoinDetailViewState extends State<_CoinDetailView>
               ),
 
               const SizedBox(height: 12),
+
               // ── 2. Chart card ──────────────────────────────────────────
               _Card(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Chart type icon — tapping cycles line ↔ candle
                     GestureDetector(
                       onTap: () => context
                           .read<CoinDetailController>()
                           .toggleChartType(),
-                      child: Row(
-                        key: ValueKey(ctrl.chartType),
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            ctrl.chartType == ChartType.line
-                                ? Iconsax.chart
-                                : Iconsax.candle,
-                            size: 16,
-                            color: theme.colorScheme.inverseSurface,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            ctrl.chartType == ChartType.line
-                                ? 'Line'
-                                : 'Candle',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.inverseSurface,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        transitionBuilder: (child, anim) =>
+                            FadeTransition(opacity: anim, child: child),
+                        child: Row(
+                          key: ValueKey(ctrl.chartType),
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: theme.dividerColor,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              child: Icon(
+                                ctrl.chartType == ChartType.line
+                                    ? Iconsax.chart
+                                    : Iconsax.candle,
+                                size: 13,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Text(
+                              ctrl.chartType == ChartType.line
+                                  ? 'Line'
+                                  : 'Candle',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
-                    Container(
-                      height: 0.5,
-                      width: double.infinity,
-                      color: AppColors.darkTextSecondary,
-                    ),
+                    Divider(height: 1, color: theme.dividerColor),
                     const SizedBox(height: 16),
-
-                    // ── Chart area ─────────────────────────────────────
                     SizedBox(
                       height: 200,
-                      child: ctrl.isLoadingChart
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.primary,
-                                strokeWidth: 1,
-                              ),
-                            )
-                          : CoinChart(
-                              chartType: ctrl.chartType,
-                              spots: ctrl.chartSpots,
-                              ohlcData: ctrl.ohlcData,
-                              lineColor: changeColor,
-                            ),
+                      child: CoinChart(ctrl: ctrl, lineColor: changeColor),
                     ),
                     const SizedBox(height: 16),
-                    Container(
-                      height: 0.5,
-                      width: double.infinity,
-                      color: AppColors.darkTextSecondary,
-                    ),
+                    Divider(height: 1, color: theme.dividerColor),
                     const SizedBox(height: 16),
-                    // Period chips — spread across available space
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: CoinDetailController.periodDays.keys
@@ -265,20 +251,28 @@ class _CoinDetailViewState extends State<_CoinDetailView>
                   children: [
                     TabBar(
                       controller: _tabController,
+                      indicatorColor: AppColors.primary,
+                      indicatorWeight: 2,
+                      indicatorSize: TabBarIndicatorSize.label,
+                      labelColor: theme.colorScheme.onSurface,
+                      unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                      labelStyle: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      unselectedLabelStyle: theme.textTheme.labelLarge,
+                      dividerColor: theme.dividerColor,
                       tabs: const [
-                        Tab(text: 'Summary'),
-                        Tab(text: 'Analysis'),
-                        Tab(text: 'Info'),
+                        Tab(text: 'Overview'),
+                        Tab(text: 'Signals'),
                       ],
                     ),
                     SizedBox(
-                      height: 340,
+                      height: 480,
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          SummaryTab(coin: coin),
-                          AnalysisTab(coin: coin),
-                          InfoTab(ctrl: ctrl),
+                          OverviewTab(coin: coin),
+                          SignalsTab(coin: coin),
                         ],
                       ),
                     ),
@@ -294,6 +288,8 @@ class _CoinDetailViewState extends State<_CoinDetailView>
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _Card extends StatelessWidget {
   final Widget child;

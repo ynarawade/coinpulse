@@ -5,25 +5,13 @@ import 'package:fl_chart/fl_chart.dart' as fl;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Unified chart — line or candlestick.
-/// High label overlaid top-right, Low label bottom-left (matching reference).
-/// Pinch-to-zoom and pan supported.
+/// Pure chart area only — no label, no period chips, no card.
+/// Wrap in a SizedBox to control height.
 class CoinChart extends StatefulWidget {
-  final ChartType chartType;
-  final List<fl.FlSpot> spots;
-
-  final List<OhlcData> ohlcData;
+  final CoinDetailController ctrl;
   final Color lineColor;
-  final bool showGrid;
 
-  const CoinChart({
-    super.key,
-    required this.chartType,
-    required this.spots,
-    required this.ohlcData,
-    required this.lineColor,
-    this.showGrid = false,
-  });
+  const CoinChart({super.key, required this.ctrl, required this.lineColor});
 
   @override
   State<CoinChart> createState() => _CoinChartState();
@@ -37,44 +25,47 @@ class _CoinChartState extends State<CoinChart> {
   Offset? _lastFocalPoint;
   bool _initialized = false;
 
+  static const double _xPad = 0.5;
+
+  CoinDetailController get ctrl => widget.ctrl;
+
   double get _dataLength {
-    final len = widget.chartType == ChartType.candlestick
-        ? widget.ohlcData.length
-        : widget.spots.length;
+    final len = ctrl.chartType == ChartType.candlestick
+        ? ctrl.ohlcData.length
+        : ctrl.chartPrices.length;
     return len.toDouble();
   }
 
   double get _high {
-    if (widget.chartType == ChartType.candlestick &&
-        widget.ohlcData.isNotEmpty) {
-      return widget.ohlcData.map((c) => c.high).reduce((a, b) => a > b ? a : b);
+    if (ctrl.chartType == ChartType.candlestick && ctrl.ohlcData.isNotEmpty) {
+      return ctrl.ohlcData.map((c) => c.high).reduce((a, b) => a > b ? a : b);
     }
-    return widget.spots.isEmpty
+    return ctrl.chartPrices.isEmpty
         ? 0
-        : widget.spots.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+        : ctrl.chartPrices.reduce((a, b) => a > b ? a : b);
   }
 
   double get _low {
-    if (widget.chartType == ChartType.candlestick &&
-        widget.ohlcData.isNotEmpty) {
-      return widget.ohlcData.map((c) => c.low).reduce((a, b) => a < b ? a : b);
+    if (ctrl.chartType == ChartType.candlestick && ctrl.ohlcData.isNotEmpty) {
+      return ctrl.ohlcData.map((c) => c.low).reduce((a, b) => a < b ? a : b);
     }
-    return widget.spots.isEmpty
+    return ctrl.chartPrices.isEmpty
         ? 0
-        : widget.spots.map((e) => e.y).reduce((a, b) => a < b ? a : b);
+        : ctrl.chartPrices.reduce((a, b) => a < b ? a : b);
   }
 
   void _resetZoom() {
     _scale = 1.0;
-    _minX = 0;
-    _maxX = (_dataLength - 1).clamp(1.0, double.infinity);
+    _minX = -_xPad;
+    _maxX = (_dataLength - 1 + _xPad).clamp(1.0, double.infinity);
     _initialized = true;
   }
 
   @override
   void didUpdateWidget(CoinChart old) {
     super.didUpdateWidget(old);
-    if (old.spots != widget.spots || old.ohlcData != widget.ohlcData) {
+    if (old.ctrl.chartPrices != ctrl.chartPrices ||
+        old.ctrl.ohlcData != ctrl.ohlcData) {
       setState(_resetZoom);
     }
   }
@@ -92,24 +83,24 @@ class _CoinChartState extends State<CoinChart> {
     setState(() {
       final visibleRange = _maxX - _minX;
 
-      // zoom
       if ((d.scale - 1.0).abs() > 0.01) {
         final newScale = (_lastScale * d.scale).clamp(1.0, 12.0);
         final focal = (d.localFocalPoint.dx / size.width).clamp(0.0, 1.0);
         final focalX = _minX + visibleRange * focal;
         final newRange = (_dataLength / newScale).clamp(5.0, _dataLength);
-        _minX = (focalX - newRange * focal).clamp(0.0, _dataLength - newRange);
+        _minX = (focalX - newRange * focal).clamp(
+          -_xPad,
+          _dataLength - newRange,
+        );
         _maxX = _minX + newRange;
         _scale = newScale;
       }
 
-      // pan
       if (_lastFocalPoint != null && d.scale == 1.0) {
         final dx = d.localFocalPoint.dx - _lastFocalPoint!.dx;
         final pxPerUnit = size.width / visibleRange;
         final shift = dx / pxPerUnit;
-        final newMin = (_minX - shift).clamp(0.0, _dataLength - visibleRange);
-        _minX = newMin;
+        _minX = (_minX - shift).clamp(-_xPad, _dataLength - visibleRange);
         _maxX = _minX + visibleRange;
         _lastFocalPoint = d.localFocalPoint;
       }
@@ -118,110 +109,147 @@ class _CoinChartState extends State<CoinChart> {
 
   @override
   Widget build(BuildContext context) {
-    if (_dataLength < 2) return const SizedBox();
-    if (!_initialized) _resetZoom();
+    final theme = Theme.of(context);
+    final isLine = ctrl.chartType == ChartType.line;
+
+    if (!_initialized && _dataLength >= 2) _resetZoom();
+
+    // First load — no data yet
+    if (_dataLength < 2) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primary,
+          strokeWidth: 2,
+        ),
+      );
+    }
 
     final high = _high;
     final low = _low;
 
-    final chart = widget.chartType == ChartType.candlestick
-        ? _CandlestickChart(
-            ohlcData: widget.ohlcData,
-            high: high,
-            low: low,
-            minX: _minX,
-            maxX: _maxX,
-            showGrid: widget.showGrid,
-          )
-        : _LineChart(
-            spots: widget.spots,
-            high: high,
-            low: low,
-            minX: _minX,
-            maxX: _maxX,
-            lineColor: widget.lineColor,
-            showGrid: widget.showGrid,
-          );
+    return Stack(
+      children: [
+        // Chart
+        GestureDetector(
+          onScaleStart: _onScaleStart,
+          onScaleUpdate: _onScaleUpdate,
+          child: SizedBox.expand(
+            child: isLine
+                ? _LineChart(
+                    prices: ctrl.chartPrices,
+                    high: high,
+                    low: low,
+                    minX: _minX,
+                    maxX: _maxX,
+                    lineColor: widget.lineColor,
+                  )
+                : _CandlestickChart(
+                    ohlcData: ctrl.ohlcData,
+                    high: high,
+                    low: low,
+                    minX: _minX,
+                    maxX: _maxX,
+                  ),
+          ),
+        ),
 
-    return GestureDetector(
-      onScaleStart: _onScaleStart,
-      onScaleUpdate: _onScaleUpdate,
-      child: Stack(
-        children: [
-          // ── Chart fills full width ─────────────────────────────────────
-          Positioned.fill(child: chart),
+        // High — top right
+        Positioned(
+          top: 4,
+          right: 4,
+          child: _PriceLabel(
+            value: high,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
 
-          // ── High label — top right ─────────────────────────────────────
-          Positioned(top: 6, right: 4, child: _PriceLabel(value: high)),
+        // Low — bottom left
+        Positioned(
+          bottom: 4,
+          left: 4,
+          child: _PriceLabel(
+            value: low,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
 
-          Positioned(bottom: 6, left: 4, child: _PriceLabel(value: low)),
-        ],
+        // Overlay spinner while refreshing — keeps old chart visible
+        if (ctrl.isLoadingChart)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.12),
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PriceLabel extends StatelessWidget {
+  final double value;
+  final Color color;
+  const _PriceLabel({required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      CurrencyFormatter.formatPrice(value),
+      style: GoogleFonts.dmSans(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        color: color,
       ),
     );
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// LINE CHART  — no axis reserved space, fills full width
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// LINE CHART
+// ══════════════════════════════════════════════════════════════════
 
 class _LineChart extends StatelessWidget {
-  final List<fl.FlSpot> spots;
-  final double high;
-  final double low;
-  final double minX;
-  final double maxX;
+  final List<double> prices;
+  final double high, low, minX, maxX;
   final Color lineColor;
-  final bool showGrid;
 
   const _LineChart({
-    required this.spots,
+    required this.prices,
     required this.high,
     required this.low,
     required this.minX,
     required this.maxX,
     required this.lineColor,
-    required this.showGrid,
   });
 
   @override
   Widget build(BuildContext context) {
-    final padding = (high - low) * 0.05;
-    final minY = low - padding;
-    final maxY = high + padding;
+    final spots = prices
+        .asMap()
+        .entries
+        .map((e) => fl.FlSpot(e.key.toDouble(), e.value))
+        .toList();
+    final pad = (high - low) * 0.05;
 
     return fl.LineChart(
       fl.LineChartData(
         minX: minX,
         maxX: maxX,
-        minY: minY,
-        maxY: maxY,
+        minY: low - pad,
+        maxY: high + pad,
         clipData: const fl.FlClipData.all(),
-        gridData: fl.FlGridData(
-          show: showGrid,
-          drawVerticalLine: false,
-          horizontalInterval: (maxY - minY) / 4,
-          getDrawingHorizontalLine: (_) => fl.FlLine(
-            color: Theme.of(context).dividerColor,
-            strokeWidth: 0.5,
-          ),
-        ),
+        gridData: const fl.FlGridData(show: false),
         borderData: fl.FlBorderData(show: false),
-        // No axis labels — labels are Stack overlays instead
-        titlesData: const fl.FlTitlesData(
-          leftTitles: fl.AxisTitles(
-            sideTitles: fl.SideTitles(showTitles: false),
-          ),
-          rightTitles: fl.AxisTitles(
-            sideTitles: fl.SideTitles(showTitles: false),
-          ),
-          topTitles: fl.AxisTitles(
-            sideTitles: fl.SideTitles(showTitles: false),
-          ),
-          bottomTitles: fl.AxisTitles(
-            sideTitles: fl.SideTitles(showTitles: false),
-          ),
-        ),
+        titlesData: _noTitles,
         lineTouchData: fl.LineTouchData(
           enabled: true,
           touchTooltipData: fl.LineTouchTooltipData(
@@ -244,23 +272,12 @@ class _LineChart extends StatelessWidget {
         lineBarsData: [
           fl.LineChartBarData(
             spots: spots,
-            isCurved: true,
-            curveSmoothness: 0.35,
+            isCurved: false,
             color: lineColor,
-            barWidth: 2,
+            barWidth: 1.5,
             isStrokeCapRound: true,
-            dotData: const fl.FlDotData(show: false),
-            belowBarData: fl.BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  lineColor.withOpacity(0.18),
-                  lineColor.withOpacity(0.0),
-                ],
-              ),
-            ),
+            belowBarData: fl.BarAreaData(show: false),
+            dotData: fl.FlDotData(show: false),
           ),
         ],
       ),
@@ -268,17 +285,13 @@ class _LineChart extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 // CANDLESTICK CHART
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 
 class _CandlestickChart extends StatelessWidget {
   final List<OhlcData> ohlcData;
-  final double high;
-  final double low;
-  final double minX;
-  final double maxX;
-  final bool showGrid;
+  final double high, low, minX, maxX;
 
   const _CandlestickChart({
     required this.ohlcData,
@@ -286,50 +299,22 @@ class _CandlestickChart extends StatelessWidget {
     required this.low,
     required this.minX,
     required this.maxX,
-    required this.showGrid,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (ohlcData.isEmpty) return const SizedBox();
-
-    final range = (high - low).abs();
-    final padding = range == 0 ? high * 0.01 : range * 0.05;
-    final minY = low - padding;
-    final maxY = high + padding;
-
+    final pad = (high - low) * 0.05;
     final start = minX.floor().clamp(0, ohlcData.length - 1);
     final end = maxX.ceil().clamp(0, ohlcData.length - 1);
     final visible = ohlcData.sublist(start, end + 1);
 
     return fl.BarChart(
       fl.BarChartData(
-        minY: minY,
-        maxY: maxY,
-        gridData: fl.FlGridData(
-          show: showGrid,
-          drawVerticalLine: false,
-          horizontalInterval: (maxY - minY) / 4,
-          getDrawingHorizontalLine: (_) => fl.FlLine(
-            color: Theme.of(context).dividerColor,
-            strokeWidth: 0.5,
-          ),
-        ),
+        minY: low - pad,
+        maxY: high + pad,
+        gridData: const fl.FlGridData(show: false),
         borderData: fl.FlBorderData(show: false),
-        titlesData: const fl.FlTitlesData(
-          leftTitles: fl.AxisTitles(
-            sideTitles: fl.SideTitles(showTitles: false),
-          ),
-          rightTitles: fl.AxisTitles(
-            sideTitles: fl.SideTitles(showTitles: false),
-          ),
-          topTitles: fl.AxisTitles(
-            sideTitles: fl.SideTitles(showTitles: false),
-          ),
-          bottomTitles: fl.AxisTitles(
-            sideTitles: fl.SideTitles(showTitles: false),
-          ),
-        ),
+        titlesData: _noTitles,
         barTouchData: fl.BarTouchData(
           enabled: true,
           touchTooltipData: fl.BarTouchTooltipData(
@@ -337,46 +322,40 @@ class _CandlestickChart extends StatelessWidget {
                 Theme.of(context).colorScheme.surfaceContainerHighest,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               if (rodIndex != 1) return null;
-              final candle = visible[groupIndex];
+              final c = visible[groupIndex];
               return fl.BarTooltipItem(
-                'O: ${CurrencyFormatter.formatPrice(candle.open)}\n'
-                'H: ${CurrencyFormatter.formatPrice(candle.high)}\n'
-                'L: ${CurrencyFormatter.formatPrice(candle.low)}\n'
-                'C: ${CurrencyFormatter.formatPrice(candle.close)}',
+                'O: ${CurrencyFormatter.formatPrice(c.open)}\n'
+                'H: ${CurrencyFormatter.formatPrice(c.high)}\n'
+                'L: ${CurrencyFormatter.formatPrice(c.low)}\n'
+                'C: ${CurrencyFormatter.formatPrice(c.close)}',
                 GoogleFonts.dmSans(
                   fontSize: 10,
-                  color: candle.isBullish
-                      ? AppColors.positive
-                      : AppColors.negative,
+                  color: c.isBullish ? AppColors.positive : AppColors.negative,
                 ),
               );
             },
           ),
         ),
         barGroups: visible.asMap().entries.map((entry) {
-          final candle = entry.value;
-          final isBullish = candle.isBullish;
-          final candleColor = isBullish
-              ? AppColors.positive
-              : AppColors.negative;
-          final bodyTop = isBullish ? candle.close : candle.open;
-          final bodyBottom = isBullish ? candle.open : candle.close;
-
+          final c = entry.value;
+          final color = c.isBullish ? AppColors.positive : AppColors.negative;
+          final bodyTop = c.isBullish ? c.close : c.open;
+          final bodyBottom = c.isBullish ? c.open : c.close;
           return fl.BarChartGroupData(
             x: entry.key,
             barRods: [
               fl.BarChartRodData(
-                fromY: candle.low,
-                toY: candle.high,
+                fromY: c.low,
+                toY: c.high,
                 width: 1,
-                color: candleColor.withOpacity(0.5),
+                color: color.withOpacity(0.5),
                 borderRadius: BorderRadius.zero,
               ),
               fl.BarChartRodData(
                 fromY: bodyBottom,
                 toY: bodyTop,
                 width: 5,
-                color: candleColor,
+                color: color,
                 borderRadius: BorderRadius.circular(1),
               ),
             ],
@@ -387,18 +366,9 @@ class _CandlestickChart extends StatelessWidget {
   }
 }
 
-class _PriceLabel extends StatelessWidget {
-  final double value;
-
-  const _PriceLabel({required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Text(
-      CurrencyFormatter.formatPrice(value),
-      style: theme.textTheme.labelMedium,
-    );
-  }
-}
+const fl.FlTitlesData _noTitles = fl.FlTitlesData(
+  leftTitles: fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
+  rightTitles: fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
+  topTitles: fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
+  bottomTitles: fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
+);

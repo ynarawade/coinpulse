@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:coin_pulse/models/coin_model.dart';
 import 'package:coin_pulse/services/api_service.dart';
 import 'package:fl_chart/fl_chart.dart' as fl;
@@ -39,25 +42,38 @@ class CoinDetailController extends ChangeNotifier {
 
   CoinDetailController({required this.coin}) {
     _chartPrices = coin.sparkline;
+    _chartSpots = coin.sparkline
+        .asMap()
+        .entries
+        .map((e) => fl.FlSpot(e.key.toDouble(), e.value))
+        .toList();
   }
 
   // ── Chart state ────────────────────────────────────────────────────────────
 
   List<double> _chartPrices = [];
   List<OhlcData> _ohlcData = [];
-  bool _isLoadingChart = false;
   List<fl.FlSpot> _chartSpots = [];
+  bool _isLoadingChart = false;
   String? _chartError;
   String _selectedPeriod = 'M';
   ChartType _chartType = ChartType.line;
 
   List<double> get chartPrices => _chartPrices;
   List<OhlcData> get ohlcData => _ohlcData;
+  List<fl.FlSpot> get chartSpots => _chartSpots;
   bool get isLoadingChart => _isLoadingChart;
   String? get chartError => _chartError;
   String get selectedPeriod => _selectedPeriod;
   ChartType get chartType => _chartType;
-  List<fl.FlSpot> get chartSpots => _chartSpots;
+
+  // ── Cache — key: "$type-$period" → data ───────────────────────────────────
+  final Map<String, List<double>> _lineCache = {};
+  final Map<String, List<OhlcData>> _ohlcCache = {};
+
+  // ── Debounce timer ─────────────────────────────────────────────────────────
+  Timer? _debounce;
+  static const _debounceDuration = Duration(milliseconds: 500);
 
   // ── Coin detail state ──────────────────────────────────────────────────────
 
@@ -114,60 +130,91 @@ class CoinDetailController extends ChangeNotifier {
   // ── Fetch line chart (/coins/{id}/market_chart) ────────────────────────────
 
   Future<void> fetchChart(String days) async {
+    final cacheKey = 'line-$days';
+
+    // serve from cache instantly — no loading flicker
+    if (_lineCache.containsKey(cacheKey)) {
+      _applyLineData(_lineCache[cacheKey]!);
+      return;
+    }
+
     _isLoadingChart = true;
     _chartError = null;
     notifyListeners();
 
     try {
       final data = await ApiService.getCoinChart(coin.id, days: days);
-      _chartPrices = (data['prices'] as List<dynamic>)
+      final prices = (data['prices'] as List<dynamic>)
           .map((e) => ((e as List<dynamic>)[1] as num).toDouble())
           .toList();
 
-      _chartSpots = _chartPrices
-          .asMap()
-          .entries
-          .map((e) => fl.FlSpot(e.key.toDouble(), e.value))
-          .toList();
+      _lineCache[cacheKey] = prices;
+      _applyLineData(prices);
     } on ApiException catch (e) {
       _chartError = e.message;
-    } catch (_) {
+      log('fetchChart error: ${e.message}');
+    } catch (e) {
       _chartError = 'Failed to load chart data.';
+      log('fetchChart error: $e');
     } finally {
       _isLoadingChart = false;
       notifyListeners();
     }
   }
 
+  void _applyLineData(List<double> prices) {
+    _chartPrices = prices;
+    _chartSpots = prices
+        .asMap()
+        .entries
+        .map((e) => fl.FlSpot(e.key.toDouble(), e.value))
+        .toList();
+  }
+
   // ── Fetch OHLC (/coins/{id}/ohlc) ─────────────────────────────────────────
 
   Future<void> fetchOhlc(String days) async {
+    final cacheKey = 'ohlc-$days';
+
+    if (_ohlcCache.containsKey(cacheKey)) {
+      _ohlcData = _ohlcCache[cacheKey]!;
+      notifyListeners();
+      return;
+    }
+
     _isLoadingChart = true;
     _chartError = null;
     notifyListeners();
 
     try {
       final data = await ApiService.getCoinOhlc(coin.id, days: days);
-      _ohlcData = (data)
+      final candles = (data as List<dynamic>)
           .map((e) => OhlcData.fromList(e as List<dynamic>))
           .toList();
+
+      _ohlcCache[cacheKey] = candles;
+      _ohlcData = candles;
     } on ApiException catch (e) {
       _chartError = e.message;
-    } catch (_) {
+      log('fetchOhlc error: ${e.message}');
+    } catch (e) {
       _chartError = 'Failed to load OHLC data.';
+      log('fetchOhlc error: $e');
     } finally {
       _isLoadingChart = false;
       notifyListeners();
     }
   }
 
-  // ── Period selection ───────────────────────────────────────────────────────
+  // ── Period selection — debounced ───────────────────────────────────────────
 
   void selectPeriod(String period) {
     if (_selectedPeriod == period) return;
     _selectedPeriod = period;
-    notifyListeners();
-    _fetchForCurrentType();
+    notifyListeners(); // update chip highlight immediately
+
+    _debounce?.cancel();
+    _debounce = Timer(_debounceDuration, _fetchForCurrentType);
   }
 
   // ── Chart type toggle ──────────────────────────────────────────────────────
@@ -177,7 +224,9 @@ class CoinDetailController extends ChangeNotifier {
         ? ChartType.candlestick
         : ChartType.line;
     notifyListeners();
-    _fetchForCurrentType();
+
+    _debounce?.cancel();
+    _debounce = Timer(_debounceDuration, _fetchForCurrentType);
   }
 
   void _fetchForCurrentType() {
@@ -214,5 +263,11 @@ class CoinDetailController extends ChangeNotifier {
     _isWatchlisted = !_isWatchlisted;
     notifyListeners();
     // TODO: persist to local storage
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
   }
 }

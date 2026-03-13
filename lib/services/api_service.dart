@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 /// CoinGecko API Service
@@ -19,14 +20,14 @@ class ApiService {
 
   /// Optional: paste your free Demo API key from coingecko.com
   /// Leave empty string if you don't have one yet.
-  static const String _apiKey = '';
+
+  static final String _apiKey = dotenv.env['coingecko_api_key']!;
 
   // ─── Timeout ────────────────────────────────────────────────────────────
   static const Duration _timeout = Duration(seconds: 15);
 
   // ─── Shared Headers ──────────────────────────────────────────────────────
   static Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
     if (_apiKey.isNotEmpty) 'x-cg-demo-api-key': _apiKey,
   };

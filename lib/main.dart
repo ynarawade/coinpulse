@@ -3,9 +3,14 @@ import 'package:coin_pulse/controller/theme_controller.dart';
 import 'package:coin_pulse/screens/splash_screen.dart';
 import 'package:coin_pulse/utils/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
+
   runApp(
     MultiProvider(
       providers: [
