@@ -25,7 +25,6 @@ class OverviewTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final isPositive = coin.priceChangePercent24h >= 0;
     final changeColor = isPositive ? AppColors.positive : AppColors.negative;
     final volColor = _volatilityColor();
